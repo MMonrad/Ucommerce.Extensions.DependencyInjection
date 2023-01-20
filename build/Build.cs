@@ -1,4 +1,3 @@
-using System;
 using System.Linq;
 using Nuke.Common;
 using Nuke.Common.CI;
@@ -21,97 +20,112 @@ class Build : NukeBuild
 
     [GitRepository] readonly GitRepository GitRepository;
     [GitVersion] readonly GitVersion GitVersion;
-
     [Solution] readonly Solution Solution;
     [Parameter] string NugetApiKey;
-
     [Parameter] string NugetApiUrl = "https://api.nuget.org/v3/index.json"; //default
     AbsolutePath ArtifactsDirectory => RootDirectory / "artifacts";
 
-    Target Clean => _ => _
-                         .Before(Restore)
-                         .Executes(() =>
-                                   {
-                                       SourceDirectory.GlobDirectories("**/bin", "**/obj")
-                                                      .ForEach(DeleteDirectory);
-                                       EnsureCleanDirectory(ArtifactsDirectory);
-                                   });
+    Target Clean =>
+        _ => _
+            .Before(Restore)
+            .Executes(() =>
+            {
+                SourceDirectory.GlobDirectories("**/bin", "**/obj")
+                    .ForEach(DeleteDirectory);
+                EnsureCleanDirectory(ArtifactsDirectory);
+            });
 
-    Target Compile => _ => _
-                           .DependsOn(Restore)
-                           .Executes(() =>
-                                     {
-                                         DotNetBuild(s => s
-                                                          .SetProjectFile(Solution)
-                                                          .SetConfiguration(Configuration)
-                                                          .SetAssemblyVersion(GitVersion.AssemblySemVer)
-                                                          .SetFileVersion(GitVersion.AssemblySemFileVer)
-                                                          .SetInformationalVersion(GitVersion.InformationalVersion)
-                                                          .EnableNoRestore());
-                                     });
+    Target Compile =>
+        _ => _
+            .DependsOn(Restore)
+            .Executes(() =>
+            {
+                DotNetBuild(s => s
+                    .SetProjectFile(Solution)
+                    .SetConfiguration(Configuration)
+                    .SetAssemblyVersion(GitVersion.AssemblySemVer)
+                    .SetFileVersion(GitVersion.AssemblySemFileVer)
+                    .SetInformationalVersion(GitVersion.InformationalVersion)
+                    .EnableNoRestore());
+            });
 
     AbsolutePath NugetDirectory => ArtifactsDirectory / "nuget";
 
-    Target Pack => _ => _
-                        .DependsOn(Compile)
-                        .Executes(() =>
-                                  {
+    Target Pack =>
+        _ => _
+            .DependsOn(Compile)
+            .Executes(() =>
+            {
+                string NuGetVersionCustom = GitVersion.NuGetVersionV2;
 
-                                      string NuGetVersionCustom = GitVersion.NuGetVersionV2;
+                //if it's not a tagged release - append the commit number to the package version
+                //tagged commits on master have versions
+                // - v0.3.0-beta
+                //other commits have
+                // - v0.3.0-beta1
 
-                                      //if it's not a tagged release - append the commit number to the package version
-                                      //tagged commits on master have versions
-                                      // - v0.3.0-beta
-                                      //other commits have
-                                      // - v0.3.0-beta1
+                if (int.TryParse(GitVersion.CommitsSinceVersionSource, out var commitNum))
+                {
+                    NuGetVersionCustom = commitNum > 0 ? NuGetVersionCustom + $"{commitNum}" : NuGetVersionCustom;
+                }
 
-                                      if (int.TryParse(GitVersion.CommitsSinceVersionSource, out var commitNum))
-                                          NuGetVersionCustom = commitNum > 0 ? NuGetVersionCustom + $"{commitNum}" : NuGetVersionCustom;
+                DotNetPack(s => s
+                    .SetProject(Solution
+                        .GetProject("Ucommerce.Extensions.DependencyInjection"))
+                    .SetConfiguration(Configuration)
+                    .EnableNoBuild()
+                    .EnableNoRestore()
+                    .SetDescription("Easy manage dependency injection in code when working with Ucommerce.")
+                    .SetPackageTags("ucommerce ioc dependency commerce ecommerce")
+                    .SetDeterministic(true)
+                    .SetIncludeSource(true)
+                    .SetIncludeSymbols(true)
+                    .SetNoDependencies(true)
+                    .EnableDeterministicSourcePaths()
+                    .SetVersion(NuGetVersionCustom)
+                    .SetOutputDirectory(ArtifactsDirectory / "nuget"));
+            });
 
-                                      DotNetPack(s => s
-                                                      .SetProject(Solution
-                                                                      .GetProject("Ucommerce.Extensions.DependencyInjection"))
-                                                      .SetConfiguration(Configuration)
-                                                      .EnableNoBuild()
-                                                      .EnableNoRestore()
-                                                      .SetDescription("Easy manage dependency injection in code when working with Ucommerce.")
-                                                      .SetPackageTags("ucommerce ioc dependency commerce ecommerce")
-                                                      .SetDeterministic(true)
-                                                      .SetIncludeSource(true)
-                                                      .SetIncludeSymbols(true)
-                                                      .SetNoDependencies(true)
-                                                      .EnableDeterministicSourcePaths()
-                                                      .SetVersion(NuGetVersionCustom)
-                                                      .SetOutputDirectory(ArtifactsDirectory / "nuget"));
-                                  });
+    Target Push =>
+        _ => _
+            .DependsOn(Pack)
+            .Requires(() => NugetApiUrl)
+            .Requires(() => NugetApiKey)
+            .Requires(() => Configuration.Equals(Configuration.Release))
+            .Requires(() => GitRepository.IsOnMainBranch())
+            .Executes(() =>
+            {
+                NugetDirectory.GlobFiles("*.nupkg")
+                    .WhereNotNull()
+                    .Where(x => !x.Name.EndsWith("symbols.nupkg"))
+                    .ForEach(x =>
+                    {
+                        DotNetNuGetPush(s => s
+                            .SetTargetPath(x)
+                            .SetSource(NugetApiUrl)
+                            .SetApiKey(NugetApiKey)
+                        );
+                    });
 
-    Target Push => _ => _
-                        .DependsOn(Pack)
-                        .Requires(() => NugetApiUrl)
-                        .Requires(() => NugetApiKey)
-                        .Requires(() => Configuration.Equals(Configuration.Release))
-                        .Requires(() => GitRepository.IsOnMainBranch())
-                        .Executes(() =>
-                                  {
-                                      NugetDirectory.GlobFiles("*.nupkg")
-                                          .WhereNotNull()
-                                          .Where(x => !x.Name.EndsWith("symbols.nupkg"))
-                                          .ForEach(x =>
-                                                   {
-                                                       DotNetNuGetPush(s => s
-                                                                            .SetTargetPath(x)
-                                                                            .SetSource(NugetApiUrl)
-                                                                            .SetApiKey(NugetApiKey)
-                                                                      );
-                                                   });
-                                  });
+                NugetDirectory.GlobFiles("*.snupkg")
+                    .WhereNotNull()
+                    .ForEach(x =>
+                    {
+                        DotNetNuGetPush(s => s
+                            .SetTargetPath(x)
+                            .SetSource(NugetApiUrl)
+                            .SetApiKey(NugetApiKey)
+                        );
+                    });
+            });
 
-    Target Restore => _ => _
-                          .Executes(() =>
-                                    {
-                                        DotNetRestore(s => s
-                                                          .SetProjectFile(Solution));
-                                    });
+    Target Restore =>
+        _ => _
+            .Executes(() =>
+            {
+                DotNetRestore(s => s
+                    .SetProjectFile(Solution));
+            });
 
     AbsolutePath SourceDirectory => RootDirectory / "src";
 

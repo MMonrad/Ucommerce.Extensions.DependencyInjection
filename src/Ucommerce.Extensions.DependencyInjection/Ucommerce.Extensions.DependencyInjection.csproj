@@ -1,7 +1,8 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>net48</TargetFrameworks>
     <Nullable>enable</Nullable>
     <langversion>latest</langversion>
+    <PackageId>Ex.Ucommerce.Extensions.DependencyInjection</PackageId>
   </PropertyGroup>
 </Project>
