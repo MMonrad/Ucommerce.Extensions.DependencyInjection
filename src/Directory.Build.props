@@ -1,0 +1,25 @@
+ <Project>
+  <PropertyGroup>
+    <Authors>Mads Monrad</Authors>
+    <RepositoryUrl>https://github.com/MMonrad/Ucommerce.Extensions.DependencyInjection</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/MMonrad/Ucommerce.Extensions.DependencyInjection</PackageProjectUrl>
+    <PackageLicense>https://github.com/MMonrad/Ucommerce.Extensions.DependencyInjection/blob/main/LICENSE</PackageLicense>
+
+    <!-- Optional: Publish the repository URL in the built .nupkg (in the NuSpec <Repository> element) -->
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+ 
+    <!-- Optional: Embed source files that are not tracked by the source control manager in the PDB -->
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+  
+    <!-- Optional: Build symbol package (.snupkg) to distribute the PDB containing Source Link -->
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+  <ItemGroup>
+      <PackageReference Include="uCommerce" Version="[9.5.0.*, 10.0.0)">
+          <PrivateAssets>none</PrivateAssets>
+      </PackageReference>
+      <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All"/>
+      <PackageReference Include="WebActivatorEx" Version="[2.0.0, 2.2.0]" PrivateAssets="All"/>
+  </ItemGroup>
+</Project>

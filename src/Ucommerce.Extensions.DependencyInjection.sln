@@ -1,0 +1,29 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.32002.261
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ucommerce.Extensions.DependencyInjection", "Ucommerce.Extensions.DependencyInjection\Ucommerce.Extensions.DependencyInjection.csproj", "{0F6B8F83-588E-4206-8EAF-5CE806697077}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "_build", "..\build\_build.csproj", "{BE157F5D-7651-4528-8E31-6370B2B194B4}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BE157F5D-7651-4528-8E31-6370B2B194B4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BE157F5D-7651-4528-8E31-6370B2B194B4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0F6B8F83-588E-4206-8EAF-5CE806697077}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0F6B8F83-588E-4206-8EAF-5CE806697077}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0F6B8F83-588E-4206-8EAF-5CE806697077}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0F6B8F83-588E-4206-8EAF-5CE806697077}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {CEBE4961-ADFB-45DE-8550-2A659DA5759D}
+	EndGlobalSection
+EndGlobal
