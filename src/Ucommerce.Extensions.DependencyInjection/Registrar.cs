@@ -24,8 +24,9 @@ namespace Ucommerce.Extensions.DependencyInjection
     [EditorBrowsable(EditorBrowsableState.Never)]
     public static class Registrar
     {
+        private const string DISABLE_CONTAINER_CHECK = "Ucommerce:DisableCheckForPotentiallyMisconfiguredComponents";
         private static readonly List<Assembly> _assemblies = new();
-        private static Func<string, bool> _fileFilter = a => true;
+        private static Func<string, bool> _fileFilter = _ => true;
 
         private static IEnumerable<Assembly> Assemblies
         {
@@ -62,13 +63,10 @@ namespace Ucommerce.Extensions.DependencyInjection
 
             RunConfigureMethods(container);
 
-            bool.TryParse(ConfigurationManager.AppSettings
-                    ["Ucommerce:DisableCheckForPotentiallyMisconfiguredComponents"],
-                out var result);
-            ConfigurationManager.AppSettings.Set("Ucommerce:DisableCheckForPotentiallyMisconfiguredComponents", "true");
+            bool.TryParse(ConfigurationManager.AppSettings[DISABLE_CONTAINER_CHECK], out var result);
+            ConfigurationManager.AppSettings.Set(DISABLE_CONTAINER_CHECK, true.ToString());
             ObjectFactory.Instance.AddChildContainer(container);
-            ConfigurationManager.AppSettings.Set("Ucommerce:DisableCheckForPotentiallyMisconfiguredComponents",
-                $"{result}");
+            ConfigurationManager.AppSettings.Set(DISABLE_CONTAINER_CHECK, $"{result}");
             if (!result)
             {
                 ObtainDependencyDetails(container.Kernel);
@@ -125,6 +123,7 @@ namespace Ucommerce.Extensions.DependencyInjection
         private static void RunConfigureMethods(IWindsorContainer container)
         {
             var modules = Assemblies.SelectMany(assembly => assembly.GetTypes())
+                .Where(type => type.IsClass)
                 .Where(type => type.IsAssignableFrom(typeof(IModule)))
                 .Select(Activator.CreateInstance)
                 .OfType<IModule>()
