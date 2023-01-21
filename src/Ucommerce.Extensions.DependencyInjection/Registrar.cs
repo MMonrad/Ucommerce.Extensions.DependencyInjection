@@ -59,13 +59,14 @@ namespace Ucommerce.Extensions.DependencyInjection
 
         public static void Configure()
         {
-            var container = new WindsorContainer();
-
-            RunConfigureMethods(container);
-
             bool.TryParse(ConfigurationManager.AppSettings[DISABLE_CONTAINER_CHECK], out var result);
             ConfigurationManager.AppSettings.Set(DISABLE_CONTAINER_CHECK, true.ToString());
+
+            var container = new WindsorContainer();
             ObjectFactory.Instance.AddChildContainer(container);
+
+            RunConfigureMethods(container.Parent);
+
             ConfigurationManager.AppSettings.Set(DISABLE_CONTAINER_CHECK, $"{result}");
             if (!result)
             {
@@ -97,6 +98,18 @@ namespace Ucommerce.Extensions.DependencyInjection
             return Directory.GetFiles(directory, "*.dll", SearchOption.AllDirectories);
         }
 
+        private static IEnumerable<Type> GetTypesSafely(Assembly assembly)
+        {
+            try
+            {
+                return assembly.DefinedTypes;
+            }
+            catch (ReflectionTypeLoadException ex)
+            {
+                return ex.Types.Where(x => x != null);
+            }
+        }
+
         private static void ObtainDependencyDetails(IKernel kernel)
         {
             var subSystem = kernel.GetSubSystem(SubSystemConstants.DiagnosticsKey);
@@ -122,9 +135,10 @@ namespace Ucommerce.Extensions.DependencyInjection
 
         private static void RunConfigureMethods(IWindsorContainer container)
         {
-            var modules = Assemblies.SelectMany(assembly => assembly.GetTypes())
+            var modules = Assemblies.SelectMany(GetTypesSafely)
+                .Distinct()
                 .Where(type => type.IsClass)
-                .Where(type => type.IsAssignableFrom(typeof(IModule)))
+                .Where(type => typeof(IModule).IsAssignableFrom(type))
                 .Select(Activator.CreateInstance)
                 .OfType<IModule>()
                 .ToList();
