@@ -25,4 +25,4 @@ jobs:
         key: ${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
 
     - name: Build Solution
-      run: ./build.ps1 compile pack --Configuration Release
+      run: ./build.ps1 compile pack --NugetApiKey ${{secrets.NUGETAPIKEY}} --Configuration Release
