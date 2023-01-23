@@ -1,0 +1,20 @@
+# .github/dependabot.yml
+version: 2
+updates:
+  - package-ecosystem: 'nuget'
+    directory: '/'
+    schedule:
+      interval: 'daily'
+    labels:
+      - "dependabot"
+      - "nuget"
+    open-pull-requests-limit: 10
+    target-branch: "develop"
+    registries: "*"
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      # Check for updates to GitHub Actions every weekday
+      interval: "daily"
+    target-branch: "develop"
+    
