@@ -107,17 +107,6 @@ class Build : NukeBuild
                             .SetApiKey(NugetApiKey)
                         );
                     });
-
-                NugetDirectory.GlobFiles("*.snupkg")
-                    .WhereNotNull()
-                    .ForEach(x =>
-                    {
-                        DotNetNuGetPush(s => s
-                            .SetTargetPath(x)
-                            .SetSource(NugetApiUrl)
-                            .SetApiKey(NugetApiKey)
-                        );
-                    });
             });
 
     Target Restore =>
