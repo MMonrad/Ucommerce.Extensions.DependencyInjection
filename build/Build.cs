@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using Nuke.Common;
 using Nuke.Common.CI;
@@ -56,7 +57,7 @@ class Build : NukeBuild
             .DependsOn(Compile)
             .Executes(() =>
             {
-                string NuGetVersionCustom = GitVersion.NuGetVersionV2;
+                var nuGetVersionCustom = GitVersion.NuGetVersionV2;
 
                 //if it's not a tagged release - append the commit number to the package version
                 //tagged commits on master have versions
@@ -66,7 +67,7 @@ class Build : NukeBuild
 
                 if (int.TryParse(GitVersion.CommitsSinceVersionSource, out var commitNum))
                 {
-                    NuGetVersionCustom = commitNum > 0 ? NuGetVersionCustom + $"{commitNum}" : NuGetVersionCustom;
+                    nuGetVersionCustom = commitNum > 0 ? nuGetVersionCustom + $"{commitNum}" : nuGetVersionCustom;
                 }
 
                 DotNetPack(s => s
@@ -77,12 +78,12 @@ class Build : NukeBuild
                     .EnableNoRestore()
                     .SetDescription("Easy manage dependency injection in code when working with Ucommerce.")
                     .SetPackageTags("ucommerce ioc dependency commerce ecommerce")
-                    .SetDeterministic(true)
-                    .SetIncludeSource(true)
-                    .SetIncludeSymbols(true)
-                    .SetNoDependencies(true)
+                    .EnableDeterministic()
+                    .EnableIncludeSource()
+                    .EnableIncludeSymbols()
+                    .EnableNoDependencies()
                     .EnableDeterministicSourcePaths()
-                    .SetVersion(NuGetVersionCustom)
+                    .SetVersion(nuGetVersionCustom)
                     .SetOutputDirectory(ArtifactsDirectory / "nuget"));
             });
 
@@ -92,12 +93,12 @@ class Build : NukeBuild
             .Requires(() => NugetApiUrl)
             .Requires(() => NugetApiKey)
             .Requires(() => Configuration.Equals(Configuration.Release))
-            .Requires(() => GitRepository.IsOnMainBranch())
+            .OnlyWhenStatic(() => GitRepository.IsOnMainBranch())
             .Executes(() =>
             {
                 NugetDirectory.GlobFiles("*.nupkg")
                     .WhereNotNull()
-                    .Where(x => !x.Name.EndsWith("symbols.nupkg"))
+                    .Where(x => !x.Name.EndsWith("symbols.nupkg", StringComparison.Ordinal))
                     .ForEach(x =>
                     {
                         DotNetNuGetPush(s => s
